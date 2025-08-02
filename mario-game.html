@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Popeye Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-header h1 {
+            color: #FF6B35;
+            font-size: 2.5em;
+            text-shadow: 3px 3px 0px #FF4500;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-info div {
+            font-weight: bold;
+            color: #8B4513;
+            font-size: 1.2em;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        #gameCanvas {
+            display: block;
+            margin: 20px auto;
+            border: 4px solid #8B4513;
+            border-radius: 10px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 60%, #228B22 60%, #32CD32 100%);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-top: 20px;
+            gap: 20px;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #FF6B35;
+            flex: 1;
+        }
+
+        .instructions p {
+            margin: 5px 0;
+            color: #333;
+        }
+
+        .instructions strong {
+            color: #FF6B35;
+        }
+
+        .game-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #startBtn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        #startBtn:hover {
+            background: linear-gradient(45deg, #45a049, #4CAF50);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        #pauseBtn {
+            background: linear-gradient(45deg, #FF9800, #F57C00);
+            color: white;
+            box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
+        }
+
+        #pauseBtn:hover {
+            background: linear-gradient(45deg, #F57C00, #FF9800);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(255, 152, 0, 0.4);
+        }
+
+        #restartBtn, #playAgainBtn {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+            color: white;
+            box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
+        }
+
+        #restartBtn:hover, #playAgainBtn:hover {
+            background: linear-gradient(45deg, #d32f2f, #f44336);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(244, 67, 54, 0.4);
+        }
+
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .game-over h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #FF6B35;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-over p {
+            font-size: 1.3em;
+            margin-bottom: 30px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>Super Popeye Game</h1>
+            <div class="game-info">
+                <div class="score">Score: <span id="score">0</span></div>
+                <div class="lives">Lives: <span id="lives">3</span></div>
+                <div class="level">Level: <span id="level">1</span></div>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        
+        <div class="game-controls">
+            <div class="instructions">
+                <p><strong>Controls:</strong></p>
+                <p>Arrow Keys: Move Left/Right</p>
+                <p>Spacebar: Jump</p>
+                <p>R: Restart Game</p>
+            </div>
+            <div class="game-buttons">
+                <button id="startBtn">Start Game</button>
+                <button id="pauseBtn">Pause</button>
+                <button id="restartBtn">Restart</button>
+            </div>
+        </div>
+        
+        <div id="gameOver" class="game-over hidden">
+            <h2>Game Over!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <button id="playAgainBtn">Play Again</button>
+        </div>
+    </div>
+    
+    <script>
+        // Game variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game state
+        let gameState = 'menu';
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let gameSpeed = 2;
+
+        // Popeye object (formerly Mario)
+        const mario = {
+            x: 50,
+            y: 300,
+            width: 32,
+            height: 32,
+            velocityX: 0,
+            velocityY: 0,
+            speed: 5,
+            jumpPower: 15,
+            onGround: false,
+            direction: 1,
+            color: '#FF0000',
+            animationFrame: 0,
+            animationSpeed: 0.2,
+            isWalking: false
+        };
+
+        // Game physics
+        const gravity = 0.8;
+        const friction = 0.8;
+
+        // Platforms array
+        const platforms = [
+            { x: 0, y: 370, width: 800, height: 30, color: '#8B4513' },
+            { x: 200, y: 300, width: 150, height: 20, color: '#228B22' },
+            { x: 400, y: 250, width: 100, height: 20, color: '#228B22' },
+            { x: 600, y: 200, width: 120, height: 20, color: '#228B22' },
+            { x: 100, y: 150, width: 80, height: 20, color: '#228B22' },
+            { x: 500, y: 100, width: 100, height: 20, color: '#228B22' }
+        ];
+
+        // Enemies array
+        let enemies = [
+            { x: 250, y: 340, width: 24, height: 24, velocityX: -1, color: '#8B0000', alive: true },
+            { x: 450, y: 220, width: 24, height: 24, velocityX: 1, color: '#8B0000', alive: true },
+            { x: 650, y: 170, width: 24, height: 24, velocityX: -1, color: '#8B0000', alive: true }
+        ];
+
+        // Coins array
+        let coins = [
+            { x: 230, y: 270, width: 16, height: 16, collected: false },
+            { x: 430, y: 220, width: 16, height: 16, collected: false },
+            { x: 630, y: 170, width: 16, height: 16, collected: false },
+            { x: 130, y: 120, width: 16, height: 16, collected: false },
+            { x: 530, y: 70, width: 16, height: 16, collected: false }
+        ];
+
+        // Input handling
+        const keys = {};
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (e.code === 'KeyR') {
+                restartGame();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+
+        // Button event listeners
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('pauseBtn').addEventListener('click', togglePause);
+        document.getElementById('restartBtn').addEventListener('click', restartGame);
+        document.getElementById('playAgainBtn').addEventListener('click', restartGame);
+
+        // Game functions
+        function startGame() {
+            gameState = 'playing';
+            gameLoop();
+        }
+
+        function togglePause() {
+            if (gameState === 'playing') {
+                gameState = 'paused';
+                document.getElementById('pauseBtn').textContent = 'Resume';
+            } else if (gameState === 'paused') {
+                gameState = 'playing';
+                document.getElementById('pauseBtn').textContent = 'Pause';
+                gameLoop();
+            }
+        }
+
+        function restartGame() {
+            gameState = 'playing';
+            score = 0;
+            lives = 3;
+            level = 1;
+            
+            mario.x = 50;
+            mario.y = 300;
+            mario.velocityX = 0;
+            mario.velocityY = 0;
+            mario.onGround = false;
+            
+            enemies = [
+                { x: 250, y: 340, width: 24, height: 24, velocityX: -1, color: '#8B0000', alive: true },
+                { x: 450, y: 220, width: 24, height: 24, velocityX: 1, color: '#8B0000', alive: true },
+                { x: 650, y: 170, width: 24, height: 24, velocityX: -1, color: '#8B0000', alive: true }
+            ];
+            
+            coins.forEach(coin => coin.collected = false);
+            
+            document.getElementById('gameOver').classList.add('hidden');
+            document.getElementById('pauseBtn').textContent = 'Pause';
+            
+            updateUI();
+            gameLoop();
+        }
+
+        function updateMario() {
+            // Handle movement and animation
+            mario.isWalking = false;
+            
+            if (keys['ArrowLeft']) {
+                mario.velocityX = -mario.speed;
+                mario.direction = -1;
+                mario.isWalking = true;
+            } else if (keys['ArrowRight']) {
+                mario.velocityX = mario.speed;
+                mario.direction = 1;
+                mario.isWalking = true;
+            } else {
+                mario.velocityX *= friction;
+            }
+            
+            if (keys['Space'] && mario.onGround) {
+                mario.velocityY = -mario.jumpPower;
+                mario.onGround = false;
+            }
+            
+            // Update animation frame
+            if (mario.isWalking) {
+                mario.animationFrame += mario.animationSpeed;
+                if (mario.animationFrame >= 4) {
+                    mario.animationFrame = 0;
+                }
+            } else {
+                mario.animationFrame = 0;
+            }
+            
+            mario.velocityY += gravity;
+            mario.x += mario.velocityX;
+            mario.y += mario.velocityY;
+            
+            if (mario.x < 0) mario.x = 0;
+            if (mario.x + mario.width > canvas.width) mario.x = canvas.width - mario.width;
+            
+            if (mario.y > canvas.height) {
+                loseLife();
+            }
+        }
+
+        function updateEnemies() {
+            enemies.forEach(enemy => {
+                if (!enemy.alive) return;
+                
+                enemy.x += enemy.velocityX;
+                
+                let onPlatform = false;
+                platforms.forEach(platform => {
+                    if (enemy.x + enemy.width > platform.x && 
+                        enemy.x < platform.x + platform.width &&
+                        enemy.y + enemy.height >= platform.y &&
+                        enemy.y + enemy.height <= platform.y + platform.height + 10) {
+                        onPlatform = true;
+                    }
+                });
+                
+                if (!onPlatform || enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) {
+                    enemy.velocityX *= -1;
+                }
+            });
+        }
+
+        function checkCollisions() {
+            mario.onGround = false;
+            platforms.forEach(platform => {
+                if (mario.x < platform.x + platform.width &&
+                    mario.x + mario.width > platform.x &&
+                    mario.y < platform.y + platform.height &&
+                    mario.y + mario.height > platform.y) {
+                    
+                    if (mario.velocityY > 0 && mario.y < platform.y) {
+                        mario.y = platform.y - mario.height;
+                        mario.velocityY = 0;
+                        mario.onGround = true;
+                    }
+                    else if (mario.velocityY < 0 && mario.y > platform.y) {
+                        mario.y = platform.y + platform.height;
+                        mario.velocityY = 0;
+                    }
+                    else if (mario.velocityX > 0) {
+                        mario.x = platform.x - mario.width;
+                    } else if (mario.velocityX < 0) {
+                        mario.x = platform.x + platform.width;
+                    }
+                }
+            });
+            
+            enemies.forEach(enemy => {
+                if (!enemy.alive) return;
+                
+                if (mario.x < enemy.x + enemy.width &&
+                    mario.x + mario.width > enemy.x &&
+                    mario.y < enemy.y + enemy.height &&
+                    mario.y + mario.height > enemy.y) {
+                    
+                    if (mario.velocityY > 0 && mario.y < enemy.y) {
+                        enemy.alive = false;
+                        mario.velocityY = -8;
+                        score += 100;
+                        updateUI();
+                    } else {
+                        loseLife();
+                    }
+                }
+            });
+            
+            coins.forEach(coin => {
+                if (coin.collected) return;
+                
+                if (mario.x < coin.x + coin.width &&
+                    mario.x + mario.width > coin.x &&
+                    mario.y < coin.y + coin.height &&
+                    mario.y + mario.height > coin.y) {
+                    
+                    coin.collected = true;
+                    score += 50;
+                    updateUI();
+                    
+                    if (coins.every(c => c.collected)) {
+                        nextLevel();
+                    }
+                }
+            });
+        }
+
+        function loseLife() {
+            lives--;
+            updateUI();
+            
+            if (lives <= 0) {
+                gameOver();
+            } else {
+                mario.x = 50;
+                mario.y = 300;
+                mario.velocityX = 0;
+                mario.velocityY = 0;
+            }
+        }
+
+        function nextLevel() {
+            level++;
+            score += 500;
+            
+            coins.forEach(coin => coin.collected = false);
+            
+            enemies.push({
+                x: Math.random() * (canvas.width - 50),
+                y: 340,
+                width: 24,
+                height: 24,
+                velocityX: Math.random() > 0.5 ? 1 : -1,
+                color: '#8B0000',
+                alive: true
+            });
+            
+            gameSpeed += 0.5;
+            updateUI();
+        }
+
+        function gameOver() {
+            gameState = 'gameOver';
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOver').classList.remove('hidden');
+        }
+
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('lives').textContent = lives;
+            document.getElementById('level').textContent = level;
+        }
+
+        function drawMario() {
+            const x = mario.x;
+            const y = mario.y;
+            const frame = Math.floor(mario.animationFrame);
+            const direction = mario.direction;
+            
+            // Save context for transformations
+            ctx.save();
+            
+            // Flip horizontally if facing left
+            if (direction === -1) {
+                ctx.scale(-1, 1);
+                ctx.translate(-x - mario.width, 0);
+            }
+            
+            // Draw Popeye's body (navy blue shirt)
+            ctx.fillStyle = '#000080';
+            ctx.fillRect(x + 8, y + 16, 16, 12);
+            
+            // Draw Popeye's arms (skin color)
+            ctx.fillStyle = '#FDBCB4';
+            ctx.fillRect(x + 4, y + 18, 6, 8);  // Left arm
+            ctx.fillRect(x + 22, y + 18, 6, 8); // Right arm
+            
+            // Draw massive forearms (animated)
+            const forearmSize = mario.isWalking ? 4 + Math.sin(frame) : 4;
+            ctx.fillStyle = '#FDBCB4';
+            ctx.fillRect(x + 2, y + 20, forearmSize, 6);  // Left forearm
+            ctx.fillRect(x + 26, y + 20, forearmSize, 6); // Right forearm
+            
+            // Draw Popeye's head (skin color)
+            ctx.fillStyle = '#FDBCB4';
+            ctx.fillRect(x + 10, y + 4, 12, 14);
+            
+            // Draw Popeye's sailor hat (white)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(x + 8, y, 16, 8);
+            
+            // Draw hat anchor symbol (blue)
+            ctx.fillStyle = '#000080';
+            ctx.fillRect(x + 14, y + 2, 4, 2);
+            ctx.fillRect(x + 15, y + 1, 2, 4);
+            
+            // Draw Popeye's eye (animated wink)
+            ctx.fillStyle = '#000000';
+            if (frame < 2) {
+                ctx.fillRect(x + 12, y + 8, 2, 2); // Left eye
+                ctx.fillRect(x + 18, y + 8, 2, 2); // Right eye
+            } else {
+                ctx.fillRect(x + 12, y + 9, 3, 1); // Winking left eye
+                ctx.fillRect(x + 18, y + 8, 2, 2); // Right eye
+            }
+            
+            // Draw Popeye's pipe (brown)
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(x + 24, y + 12, 6, 2);
+            
+            // Draw pipe smoke (animated)
+            if (mario.isWalking) {
+                ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+                const smokeOffset = Math.sin(frame * 2) * 2;
+                ctx.fillRect(x + 30, y + 8 + smokeOffset, 2, 2);
+                ctx.fillRect(x + 32, y + 6 + smokeOffset, 2, 2);
+            }
+            
+            // Draw Popeye's legs (blue pants)
+            ctx.fillStyle = '#000080';
+            ctx.fillRect(x + 10, y + 28, 5, 4); // Left leg
+            ctx.fillRect(x + 17, y + 28, 5, 4); // Right leg
+            
+            // Draw animated leg movement when walking
+            if (mario.isWalking) {
+                const legOffset = Math.sin(frame * 3) * 2;
+                ctx.fillRect(x + 10, y + 28 + legOffset, 5, 4); // Left leg
+                ctx.fillRect(x + 17, y + 28 - legOffset, 5, 4); // Right leg
+            }
+            
+            // Draw Popeye's shoes (black)
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(x + 8, y + 30, 8, 2);  // Left shoe
+            ctx.fillRect(x + 16, y + 30, 8, 2); // Right shoe
+            
+            // Restore context
+            ctx.restore();
+        }
+
+        function drawPlatforms() {
+            platforms.forEach(platform => {
+                ctx.fillStyle = platform.color;
+                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.fillRect(platform.x, platform.y, platform.width, 2);
+            });
+        }
+
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                if (!enemy.alive) return;
+                
+                ctx.fillStyle = enemy.color;
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(enemy.x + 4, enemy.y + 6, 4, 4);
+                ctx.fillRect(enemy.x + 16, enemy.y + 6, 4, 4);
+                
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(enemy.x + 6, enemy.y + 8, 2, 2);
+                ctx.fillRect(enemy.x + 18, enemy.y + 8, 2, 2);
+            });
+        }
+
+        function drawCoins() {
+            coins.forEach(coin => {
+                if (coin.collected) return;
+                
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(coin.x + coin.width/2, coin.y + coin.height/2, coin.width/2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#FFFF00';
+                ctx.beginPath();
+                ctx.arc(coin.x + coin.width/2 - 2, coin.y + coin.height/2 - 2, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawBackground() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.6);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#98FB98');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.6);
+            
+            ctx.fillStyle = '#32CD32';
+            ctx.fillRect(0, canvas.height * 0.6, canvas.width, canvas.height * 0.4);
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.beginPath();
+            ctx.arc(150, 80, 30, 0, Math.PI * 2);
+            ctx.arc(180, 80, 40, 0, Math.PI * 2);
+            ctx.arc(210, 80, 30, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(500, 60, 25, 0, Math.PI * 2);
+            ctx.arc(520, 60, 35, 0, Math.PI * 2);
+            ctx.arc(545, 60, 25, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawBackground();
+            drawPlatforms();
+            drawCoins();
+            drawEnemies();
+            drawMario();
+            
+            if (gameState === 'paused') {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '48px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('PAUSED', canvas.width/2, canvas.height/2);
+                ctx.textAlign = 'left';
+            }
+        }
+
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+            
+            updateMario();
+            updateEnemies();
+            checkCollisions();
+            render();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize game
+        updateUI();
+        render();
+    </script>
+</body>
+</html>
